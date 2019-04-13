@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html><head>
+  <meta http-equiv="Content-Security-Policy" content="default-src chrome:; img-src data: *; media-src *">
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <meta name="viewport" content="width=device-width; user-scalable=0">
+  <link rel="stylesheet" href="chrome://global/skin/aboutReader.css" type="text/css">
+  <script type="text/javascript" src="chrome://global/content/reader/aboutReader.js"></script>
+<link rel="stylesheet" href="chrome://global/skin/narrate.css"><title>Linux内存调试工具—Valgrind_sunny90-web开发</title><link rel="shortcut icon" href="http://www.sunny90.com/favicon.ico"></head>
+
+<body class="light sans-serif loaded">
+  <div class="container font-size9 content-width8">
+    <div class="header reader-header reader-show-element">
+      <a class="domain reader-domain" href="http://www.sunny90.com/a/server/2014/0905/108.html">sunny90.com</a>
+      <div class="domain-border"></div>
+      <h1 class="reader-title">Linux内存调试工具—Valgrind_sunny90-web开发</h1>
+      <div class="credits reader-credits"></div>
+      <div class="meta-data">
+        <div class="reader-estimated-time">125-157 分钟</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="content">
+      <div class="moz-reader-content line-height4 reader-show-element"><div id="readability-page-1" class="page"><div><p>
+		1、&nbsp;Valgrind简介<br>
+Valgrind是一个GPL的软件，用于Linux程序的内存调试、内存泄漏检测以及性能分析的软件开发工具。Valgrind工具主要用于C和C++
+写的程序，因为用这些语言写的程序倾向于有更多的bug，Valgrind已经被部分地或者完全的用于C，C++，Java，Perl，Python，汇
+编，Fortran，Ada和许多其他语言写的程序。<br>
+使用Valgrind的工具包，你可以自动的检测许多内存管理的bug和性能瓶颈。Valgrind可以和其他工具一起使用。Valgrind可以绑定GDB并附加到程序检测出错误的地方，因此你可以执行并且指出当前运行到什么地方了。</p><p>
+
+2、 安装valgrind<br>
+1）下载：<br>
+到www.valgrind.org&nbsp;下载最新版valgrind-3.8.1.tar.bz2下载到本地<br>
+2）解压：<br>
+用rz&nbsp;-be命令上传到服务器<br>
+解压安装包：tar&nbsp;–jxvf&nbsp;valgrind-3.8.1.tar.bz2<br>
+解压后生成目录valgrind-3.8.1&nbsp;<br>
+3）安装：<br>
+标准gnu软件安装方式，./configure&nbsp;—&nbsp;make&nbsp;—&nbsp;make&nbsp;install<br>
+cd&nbsp;valgrind-3.8.1<br>
+./configure<br>
+make;<br>
+make&nbsp;install</p><p>
+
+3、&nbsp;Valgrind工具主要功能<br>
+Valgrind包括如下一些工具：<br>
+1) &nbsp;Memcheck。这是valgrind应用最广泛的工具，一个重量级的内存检查器，能够发现开发中绝大多数内存错误使用情况，比如：使用未初始化的内存，使用已经释放了的内存，内存访问越界等。这也是本文将重点介绍的部分。&nbsp;<br>
+2) &nbsp;Callgrind。它主要用来检查程序中函数调用过程中出现的问题。&nbsp;<br>
+3) Cachegrind。它主要用来检查程序中缓存使用出现的问题。&nbsp;<br>
+4) &nbsp;Helgrind。它主要用来检查多线程程序中出现的竞争问题。&nbsp;<br>
+5) &nbsp;Massif。它主要用来检查程序中堆栈使用中出现的问题。&nbsp;<br>
+6) &nbsp;Extension。可以利用core提供的功能，自己编写特定的内存调试工具。&nbsp;<br>
+下面分别介绍各个工具的作用：</p><p>
+
+3.1.&nbsp;&nbsp;Memcheck<br>
+Memcheck是最常用的工具，用来检测程序中出现的内存问题，所有对内存的读写都会被检测到，一切对malloc()/free()/new/delete的调用都会被捕获。所以，它能检测以下问题：<br>
+1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;对未初始化内存的使用；<br>
+2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读/写释放后的内存块；<br>
+3)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读/写超出malloc分配的内存块；&nbsp;<br>
+4)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;读/写不适当的栈中内存块；&nbsp;<br>
+5)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;内存泄漏，指向一块内存的指针永远丢失；&nbsp;&nbsp;<br>
+6)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;不正确的malloc/free或new/delete匹配；<br>
+7)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memcpy()相关函数中的dst和src指针重叠<br>
+这些问题往往是C/C++程序员最头疼的问题，Memcheck在这里帮上了大忙。</p><p>
+
+3.2.&nbsp;&nbsp;Helgrind<br>
+Helgrind用于检测多线程竞争资源的工具。<br>
+它主要用来检查多线程程序中出现的竞争问题。Helgrind&nbsp;寻找内存中被多个线程访问，而又没有一贯加锁的区域，这些区域往往是线程之间失
+去同步的地方，而且会导致难以发掘的错误。Helgrind实现了名为“Eraser”的竞争检测算法，并做了进一步改进，减少了报告错误的次数。不
+过，Helgrind仍然处于实验阶段。</p><p>
+
+3.3.&nbsp;&nbsp;Callgrind<br>
+Callgrind收集程序运行时的一些数据，建立函数调用关系等信息，还可以有选择地进行cache&nbsp;模拟。在运行结束时，它会把分析数据写入一个文件。callgrind_annotate可以把这个文件的内容转化成可读的形式。</p><p>
+
+3.4.&nbsp;&nbsp;Cachegrind<br>
+Cachegrind用于检查缓存使用的工具。<br>
+它模拟&nbsp;CPU中的一级缓存I1,D1和L2二级缓存，能够精确地指出程序中&nbsp;cache的丢失和命中。如果需要，它还能够为我们提
+供cache丢失次数，内存引用次数，以及每行代码，每个函数，每个模块，整个程序产生的指令数。这对优化程序有很大的帮助。Cache对目前系统的性能
+有决定性的影响。因此这些信息可以指导程序员调整代码，最大限度的提高程序性能。</p><p>
+
+3.5.&nbsp;&nbsp;Massif<br>
+Massif堆栈分析器，它能测量程序在堆栈中使用了多少内存，告诉我们堆块，堆管理块和栈的大小。Massif能帮助我们减少内存的使用，在带有虚拟内存的现代系统中，它还能够加速我们程序的运行，减少程序停留在交换区中的几率。<br>
+程序开发者通过它可以深入了解程序的内存使用行为，从而对内存使用进行优化。这个功能对C++尤其有用（因为C++有很多隐藏的内存分配和释放）。</p><p>
+
+4、&nbsp;Valgrind体系结构<br>
+Valgrind是一套Linux下，开放源代码（GPL&nbsp;V2）的仿真调试工具的集合。Valgrind由内核（core）以及基于内核的其
+他调试工具组成。内核类似于一个框架（framework），它模拟了一个CPU环境，并提供服务给其他工具；而其他工具则类似于插件（plug-
+in），利用内核提供的服务完成各种特定的内存调试任务。<br>
+Valgrind的体系结构如下图所示：<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5194F1J6.png" data-bd-imgshare-binded="1"><br>
+5、Linux程序内存空间布局<br>
+要发现Linux下的内存问题，首先一定要知道在Linux下，内存是如何被分配的？下图展示了一个典型的Linux&nbsp;C程序内存空间布局：<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5194HE52.jpg" data-bd-imgshare-binded="1"><br>
+一个典型的Linux&nbsp;C程序内存空间由如下几部分组成：<br>
+1)&nbsp;&nbsp;&nbsp;&nbsp;代码段（.text）。这里存放的是CPU要执行的指令。代码段是可共享的，相同的代码在内存中只会有一个拷贝，同时这个段是只读的，防止程序由于错误而修改自身的指令。&nbsp;<br>
+2)&nbsp;&nbsp;&nbsp;&nbsp;初始化数据段（.data）。这里存放的是程序中需要明确赋初始值的变量，例如位于所有函数之外的
+全局变量：int&nbsp;val=100。需要强调的是，以上两段都是位于程序的可执行文件中，内核在调用exec函数启动该程序时从源程序文件中读
+入。&nbsp;<br>
+3)&nbsp;&nbsp;&nbsp;&nbsp;未初始化数据段（.bss）。位于这一段中的数据，内核在执行该程序前，将其初始化为0或者null。例如出现在任何函数之外的全局变量：int&nbsp;sum;&nbsp;<br>
+4)&nbsp;&nbsp;&nbsp;&nbsp;堆（Heap）。这个段用于在程序中进行动态内存申请，例如经常用到的malloc，new系列函数就是从这个段中申请内存。&nbsp;<br>
+5)&nbsp;&nbsp;&nbsp;&nbsp;栈（Stack）。函数中的局部变量以及在函数调用过程中产生的临时变量都保存在此段中。</p><p>
+
+6、内存检查原理<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5194KJb.jpg" data-bd-imgshare-binded="1"><br>
+Memcheck&nbsp;能够检测出内存问题，关键在于其建立了两个全局表。<br>
+1)&nbsp;&nbsp;&nbsp;Valid----Value表：<br>
+对于进程的整个地址空间中的每一个字节(byte)，都有与之对应的8个bits；对于&nbsp;CPU&nbsp;的每个寄存器，也有一个与之对应的bit向量。这些bits负责记录该字节或者寄存器值是否具有有效的、已初始化的值。&nbsp;<br>
+2)&nbsp;&nbsp;&nbsp;Valid----Address表：<br>
+对于进程整个地址空间中的每一个字节(byte)，还有与之对应的1个bit，负责记录该地址是否能够被读写。&nbsp;<br>
+检测原理<br>
+1)&nbsp;&nbsp;&nbsp;当要读写内存中某个字节时，首先检查这个字节对应的&nbsp;A&nbsp;bit。如果该A&nbsp;bit显示该位置是无效位置，memcheck&nbsp;则报告读写错误。&nbsp;<br>
+2)&nbsp;&nbsp;&nbsp;内核（core）类似于一个虚拟的&nbsp;CPU&nbsp;环境，这样当内存中的某个字节被加载到真实
+的&nbsp;CPU&nbsp;中时，该字节对应的&nbsp;V&nbsp;bit&nbsp;也被加载到虚拟的&nbsp;CPU&nbsp;环境
+中。一旦寄存器中的值，被用来产生内存地址，或者该值能够影响程序输出，则&nbsp;memcheck&nbsp;会检查对应的
+V&nbsp;bits，如果该值尚未初始化，则会报告使用未初始化内存错误。</p><p>
+
+7、&nbsp;Valgrind&nbsp;使用</p><p>
+
+7.1.&nbsp;&nbsp;编译程序<br>
+为了使valgrind发现的错误更精确，如能够定位到源代码行，建议在编译时加上-g参数，-o&nbsp;sample，确定输出文件的名称为sample。<br>
+一般c程序就用gcc编译，c++程序就用g++编译，这里用到的示例程序文件名为：sample.c，选用的编译器为gcc，生成可执行程序：<br>
+gcc&nbsp;&nbsp;-g&nbsp;sample.c&nbsp;&nbsp;-o&nbsp;sample</p><p>
+
+7.2.&nbsp;&nbsp;参数用法<br>
+valgrind&nbsp;[options]&nbsp;prog-and-args&nbsp;[options]:&nbsp;常用选项，适用于所有Valgrind工具。<br>
+1.&nbsp;&nbsp;&nbsp;-tool=&lt;toolname&gt;&nbsp;[default:memcheck]。运行&
+nbsp;valgrind中名为toolname的工具，例如，Memcheck，Cachegrind等等。如果省略工具名，默认运行
+memcheck。<br>
+2.&nbsp;&nbsp;&nbsp;-h&nbsp;--help&nbsp;显示所有选项的帮助，包括内核和选定的工具两者。<br>
+3.&nbsp;&nbsp;&nbsp;--help-debug&nbsp;和—help相同，并且还能显示通常只有Valgrind的开发人员使用的调试选项。<br>
+4.&nbsp;&nbsp;&nbsp;--version&nbsp;显示valgrind内核的版本号，工具可以有他们自己的版本号。这是一种保证工具只在它们可以运行的内核上工作的一种设置。这样可以减少在工具和内核之间版本兼容性导致奇怪问题的概率。<br>
+5.&nbsp;&nbsp;&nbsp;q&nbsp;–quiet&nbsp;安静地运行，只打印错误信息。在进行回归测试或者有其它的自动化测试机制时会非常有用。<br>
+6.&nbsp;&nbsp;&nbsp;v&nbsp;–verbose&nbsp;更详细的信息。在各个方面显示你的程序的额外信息，例如：共享对象加载，使用的充值，执行引擎和工具的进程，异常行为的警告信息。重复这个标记可以增加详细的级别。<br>
+7.&nbsp;&nbsp;&nbsp;-d&nbsp;调试Valgrind自身发出的信息。通常只有Valgrind开发人员对此感兴趣。重复这个标记可以产生更详细的输出。<br>
+8.&nbsp;&nbsp;&nbsp;--trace-children=&lt;no|yes&gt;[default:no]&nbsp;当这个
+选项打开时，Valgrind会跟踪到子进程中。这经常会导致困惑，而且通常不是你所期望的，所以默认这个选项是关闭的。<br>
+9.&nbsp;&nbsp;&nbsp;--leak-check=&lt;no|summary|yes|full&gt;&nbsp;
+[default:&nbsp;summary]&nbsp;当客户程序结束后，对内存泄露进行检查。内存泄露是指一个分配的块没有被释放，但是没有指针
+再指向它。如果设置成summary，它只告诉内存如何泄露了。如果设置成full或者yes，它将报告每个泄露的详细信息。<br>
+10.&nbsp;--show-reachable=&lt;yes|no&gt;&nbsp;[default:&nbsp;no]&nbsp;当
+disabled时，内存泄露检测只显示那些没有指针指向的块或只能找到一个指向其中间位置的指针的块。内存泄露的主要发生在这些块上。当enabled
+时，泄露检测也会报告那些能找到一个指针指向的块。你的程序至少在理论上在退出前能释放这些块。与没有指针指向的块或那些只有一个内部指针指向的块相
+比:&nbsp;它们(可能指没有指针指向的块或那些只有一个内部指针指向的块)更有可能会内存泄漏，因为你事实上没有一个指向块的起始位置的指针，即使
+你想释放，也没有进行释放的指针。<br>
+11.&nbsp;--track-origins=&lt;yes|no&gt;&nbsp;[default:&nbsp;no]是否跟踪未初始化的
+值来自哪里。默认是关闭的，这就意味着它虽然能告诉你使用一种危险的方式访问未初始化的变量，但是不能告诉你未初始化的变量来自哪里。当设置成
+yes，memcheck将会努力将未初始化的变量的位置告诉你。可能来自以下四个位置:heap&nbsp;bloack,&nbsp;栈中分配的，客
+户端请求的(?)，或者其他方式(如调用brk等)<br>
+12.&nbsp;--leak-resolution=&lt;low|med|high&gt;：这个选项设定内存检查工具在检测出多个内存泄露时，
+如何将这些内存泄露归结为同一个泄露（合并那些由相同原因引起的）。设为low时，试图合并前两个泄露情况，设为med，则是前四个，默认是high，试
+图合并所有的泄露情况。这个选项不影响memcheck找泄露的能力，只是影响它的检测结果显示。<br>
+13.&nbsp;--track-fds=&lt;no|yes&gt;[default:no]&nbsp;当这个选项打开时，Valgrind会在
+退出时打印一个打开文件描述符的列表。每个文件描述符都会打印出一个文件是在哪里打开的栈回溯，和任何与文件描述符相关的详细信息比如文件名或
+socket信息。<br>
+14.&nbsp;--time-stamp=&lt;no|yes&gt;[default:no]&nbsp;当这个选项打开时，每条信息之前都有一个从程序开始消逝的时间，用天，小时，分钟，秒和毫秒表示。<br>
+15.&nbsp;--log-fd=&lt;number&gt;[default:2=stderr]&nbsp;指定Valgrind把它所有的消
+息都输出到一个指定的文件描述符中去。默认值2，是标准错误输出（stderr）。注意这可能会干扰到客户端自身对stderr的使用，Valgrind
+的输出与客户程序的输出将穿插在一起输出到stderr。&nbsp;<br>
+16.&nbsp;--log-file=&lt;filename&gt;&nbsp;指定Valgrind把它所有的信息输出到指定的文件中。<br>
+17.&nbsp;--log-file-exactly=&lt;&nbsp;filename&gt;&nbsp;类似于--log-file，输出LOG信息到file。<br>
+18.&nbsp;--log-file-qualifier=&lt;VAR&gt;&nbsp;当和—log-file一起使用时，日志文件名将通过环境变量$VAR来筛选，这对于MPI程序是有益的。<br>
+19.&nbsp;--log-socket=&lt;ip-address:port-number&gt;&nbsp;指定Valgrind输出所有
+的消息到指定的IP，指定的端口。当使用1500端口时，端口有可能被忽略。如果不能建立一个到指定端口的连接，Valgrind将输出写到标准错误
+（stderr）。这个选项经常和一个Valgrind监听程序一起使用。</p><p>
+
+7.3.&nbsp;&nbsp;LOG信息输出<br>
+这些选项适用于所有产生错误的工具，比如Memcheck，但是Cachegrind不行。<br>
+1.&nbsp;&nbsp;&nbsp;--xml=&lt;no|yes&gt;[default:no]&nbsp;当这个选项打开，输出将是xml格式，只有Memcheck可用。<br>
+2.&nbsp;&nbsp;&nbsp;--xml-user-comment=&lt;string&gt;&nbsp;在XML开头附加用户注释，仅在指定了--xml=yes时生效，否则忽略。<br>
+3.&nbsp;&nbsp;&nbsp;--num-callers=&lt;number&gt;[default:12]&nbsp;默认情况
+下，Valgrind显示12层函数调用的函数名有助于确定程序的位置。可以通过这个选项来改变这个数字。这样有助在嵌套调用的层次很深时确定程序的位
+置。注意错误信息通常只回溯到最顶上的4个函数。（当前函数，和它的3个调用者的位置）。所以这并不影响报告的错误总数。最大值是50。注意高的设置会使
+Valgrind运行得慢，并且使用更多的内存，但是在嵌套调用层次比较高的程序中非常实用。<br>
+4.&nbsp;&nbsp;&nbsp;--error-limit=&lt;no|yes&gt;[default:yes]&nbsp;如果太多错误，则停止显示新错误<br>
+5.&nbsp;&nbsp;&nbsp;--error-exitcode=&lt;number&gt;[default:0]&nbsp;指定如果
+Valgrind在运行过程中报告任何错误时的退出返回值，有两种情况：当设置为默认值（零）时，Valgrind返回的值将是它模拟运行的程序的返回
+值。当设置为非零值时，如果Valgrind发现任何错误时则返回这个值。<br>
+6.&nbsp;&nbsp;&nbsp;--show-below-main=&lt;no|yes&gt;[default:no]&nbsp;默认地，错误时的栈回溯不显示main()之下的任何函数。<br>
+7.&nbsp;&nbsp;&nbsp;--suppressions=&lt;filename&gt;[default:$PREFIX/lib
+/valgrind/default.supp]&nbsp;指定一个额外的文件读取不需要理会的错误；你可以根据需要使用任意多的额外文件。<br>
+8.&nbsp;&nbsp;&nbsp;--gen-suppressions=&lt;yes|no|all&gt;[default:no]&
+nbsp;当设置为yes时，Valgrind将会在每个错误显示之后自动暂停并且打印这一行：----
+Print&nbsp;suppression?---[Return/N/n/Y/y/C/c]----&nbsp;当设置为all
+时，Valgrind会对每一个错误打印一条禁止条目，而不向用户询问。这个提示的行为和--db-attach选项（见下面）相同。这个选项对C++程
+序非常有用，它打印出编译器调整过的名字。<br>
+9.&nbsp;&nbsp;&nbsp;--db-attach=&lt;no|yes&gt;[default:no]&nbsp;当这个选项打开
+时，Valgrind将会在每次打印错误时暂停并打出一
+行：----&nbsp;Attach&nbsp;to&nbsp;debugger&nbsp;?&nbsp;---&nbsp;[Return/N
+/n/Y/y/C/c]&nbsp;----按下回车，或者N、回车，n、回车，Valgrind不会对这个错误启动调试器。按下Y、回车，或者y、回
+车，Valgrind会启动调试器并设定在程序运行的这个点。当调试结束时，退出，程序会继续运行。在调试器内部尝试继续运行程序，将不会生效。按下C、
+回车，或者c、回车，Valgrind不会启动一个调试器，并且不会再次询问。<br>
+10.&nbsp;--db-command=&lt;command&gt;[default:gdb&nbsp;–nw%f%p]&nbsp;通过
+--db-attach指定如何使用调试器。默认的调试器是gdb.%f会用可执行文件的文件名替换，%p会被可执行文件的进程ID替换。<br>
+11.&nbsp;--input-fd=&lt;number&gt;[default:0,stdin]&nbsp;使用--db-
+attach=yes和--gen-suppressions=yes选项，在发现错误时，Valgrind会停下来去读取键盘输入。默认地，从标准输入
+读取，所以关闭了标准输入的程序会有问题。这个选项允许你指定一个文件描述符来替代标准输入读取。<br>
+12.&nbsp;--max-stackframe=&lt;number&gt;&nbsp;[default:2000000]&nbsp;栈的最大值。如果栈指针的偏移超过这个数量，Valgrind则会认为程序是切换到了另外一个栈执行。</p><p>
+
+7.4.&nbsp;&nbsp;适用于Memcheck工具的相关选项<br>
+1.&nbsp;&nbsp;&nbsp;--log-file=valgrind_log&nbsp;检测报告存入valgrind_log中<br>
+2.&nbsp;&nbsp;&nbsp;--leak-check=full&nbsp;指的是完全检查内存泄露<br>
+3.&nbsp;&nbsp;&nbsp;--show-reachable=yes&nbsp;是显示内存泄露的地点&nbsp;<br>
+4.&nbsp;&nbsp;&nbsp;--trace-children=yes&nbsp;是跟入子进程<br>
+5.&nbsp;&nbsp;&nbsp;-NT&nbsp;不输出时间统计信息<br>
+6.&nbsp;&nbsp;&nbsp;-cache&nbsp;N&nbsp;指定cache的大小，取值范围[0,131072]<br>
+7.&nbsp;&nbsp;&nbsp;-X&nbsp;启动单进程模式，即不会产生任何子进程<br>
+8.&nbsp;&nbsp;&nbsp;--leak-resolution=&lt;low|med|high&gt;设定内存检查工具在检测出多个内存泄露时，如何将这些内存泄露归结为同一个泄露（合并由相同原因引起的）。</p><p>
+
+7.5.&nbsp;&nbsp;Valgrind可以识别的错误及错误提示<br>
+1.&nbsp;&nbsp;&nbsp;malloc/free&nbsp;内存在退出前没有被释放<br>
+2.&nbsp;&nbsp;&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;非法写内存，一般为数组越界<br>
+3.&nbsp;&nbsp;&nbsp;Invalid&nbsp;read&nbsp;of&nbsp;size&nbsp;非法读内存，一般为数组越界<br>
+4.&nbsp;&nbsp;&nbsp;definitely&nbsp;lost/possibly&nbsp;lost/still&nbsp;reachable&nbsp;in&nbsp;loss&nbsp;record&nbsp;内存未释放<br>
+5.&nbsp;&nbsp;&nbsp;Invalid&nbsp;free()/delete/delete[]&nbsp;同一指针被多次释放<br>
+6.&nbsp;&nbsp;&nbsp;Source&nbsp;and&nbsp;destination&nbsp;overlap&nbsp;内存重叠（一般是使strncpy,memcpy引起）<br>
+7.&nbsp;&nbsp;&nbsp;Syscall&nbsp;param&nbsp;contains&nbsp;uninitialised&nbsp;byte&nbsp;调用系统函数时传入了未初始化的变量<br>
+8.&nbsp;&nbsp;&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value&nbsp;
+条件判断时使用了未初始化的变量<br>
+9.&nbsp;&nbsp;&nbsp;Access&nbsp;not&nbsp;within&nbsp;mapped&nbsp;region/Stack&nbsp;overflow&nbsp;栈溢出<br>
+10.&nbsp;Mismatched&nbsp;free()/delete/delete[]&nbsp;new--delete&nbsp;malloc--free搭配错误</p><p>
+
+7.6.&nbsp;&nbsp;阅读valgrind给出的内存泄露报告<br>
+“LEAK&nbsp;SUMMARY”:这表示下面是内存泄露的信息（造成内存丢失的程序行可以通过查看这一行前面的清单来定位）。<br>
+1)&nbsp;still&nbsp;reachable:&nbsp;表示泄漏的内存在程序运行完的时候，仍旧有指针指向它，因而，这种内存在程序运
+行结束之前可以释放。一般情况下valgrind不会报这种泄漏，除非使用了参数&nbsp;--show-reachable=yes。指的是内存指针
+还在&nbsp;还有机会使用或者释放。如果你后面的程序不用或者不释放也会泄漏,valgrind在当时还不知道以后会不会泄漏&nbsp;。<br>
+2)&nbsp;definitely&nbsp;lost:&nbsp;明确地已经泄漏了，因为在程序运行完的时候，没有指针指向它,&nbsp;指向它的指针在程序中丢失了。一般这种泄漏常见，而且比较难发现问题所在。<br>
+3)&nbsp;indirectly&nbsp;lost:&nbsp;间接地，指向该内存的指针都位于内存泄露处。<br>
+4)&nbsp;possibly&nbsp;lost:&nbsp;发现了一个指向某块内存中部的指针，而不是指向内存块头部。这种指针一般是原先指向内存块头部，后来移动到了内存块的中部，还有可能该指针和该内存根本就没有关系，检测工具只是怀疑有内存泄漏。</p><p>
+
+8、&nbsp;Memcheck使用举例<br>
+8.1.&nbsp;&nbsp;使用未初始化的内存<br>
+对于位于程序中不同段的变量，其初始值是不同的，全局变量和静态变量初始值为0，而局部变量和动态申请的变量，其初始值为随机值。如果程序使用了为随机值的变量，那么程序的行为就变得不可预期。<br>
+Memcheck检测内存问题的原理如下图所示：<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5194T1156.png" data-bd-imgshare-binded="1"><br>
+Valgrind可以知道如果一个变量被赋予一个未初始化的变量，这个变量仍然处于"未初始化"状态。<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;编译程序test.c<br>
+gcc编译C程序文件：gcc&nbsp;test1.c&nbsp;-g&nbsp;-o&nbsp;test1<br>
+使用valgrind前需要使用-g参数编译源程序以便生成debug信息。<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test1<br>
+为了能够给出内存检测报告，需要加上--leak-check参数<br>
+其中--leak-check=full&nbsp;指的是完全检查内存泄漏。<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==12120==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==12120==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==12120==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==12120==&nbsp;Command:&nbsp;./test1<br>
+==12120==&nbsp;<br>
+/*错误：使用未初始化的变量，位置：test1.c的第5行*/<br>
+==12120==&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)<br>
+==12120==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x400504:&nbsp;main&nbsp;(test1.c:5)<br>
+==12120==&nbsp;<br>
+X&nbsp;is&nbsp;zero==12120==&nbsp;<br>
+==12120==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==12120==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==12120==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;0&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;0&nbsp;bytes&nbsp;allocated<br>
+==12120==&nbsp;<br>
+==12120==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==12120==&nbsp;<br>
+==12120==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==12120==&nbsp;Use&nbsp;--track-origins=yes&nbsp;to&nbsp;see&nbsp;where&nbsp;uninitialised&nbsp;values&nbsp;come&nbsp;from<br>
+==12120==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;1&nbsp;errors&nbsp;from&nbsp;1&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)<br>
+从这份报告可以看出进程PID是12120，<br>
+错误：test1.c文件的第5行main函数使用了一个未初始化的变量：<br>
+/*使用了未初始化的变量（包括未初始化的局部变量和未初始化的堆区域）*
+/Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)</p><p>
+
+8.2.&nbsp;&nbsp;非法写/读错误，使用超过分配的内存空间<br>
+这种情况是指：访问了你不应该/没有权限访问的内存地址空间，比如访问数组时越界；对动态内存访问时超出了申请的内存大小范围。<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5194ZA53.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test3<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==4381==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==4381==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==4381==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==4381==&nbsp;Command:&nbsp;./test3<br>
+==4381==&nbsp;<br>
+/*错误一：第9行iw[i]数组越界，非法的4字节写操作*/<br>
+==4381==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;4<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x400638:&nbsp;main&nbsp;(test3.c:9)<br>
+==4381==&nbsp;&nbsp;Address&nbsp;0x51c8068&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;40&nbsp;alloc'd<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400609:&nbsp;main&nbsp;(test3.c:5)<br>
+==4381==&nbsp;<br>
+/*错误二：第12行iw[i]数组越界，非法的4字节读操作*/<br>
+==4381==&nbsp;Invalid&nbsp;read&nbsp;of&nbsp;size&nbsp;4<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x40066A:&nbsp;main&nbsp;(test3.c:12)<br>
+==4381==&nbsp;&nbsp;Address&nbsp;0x51c8068&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;40&nbsp;alloc'd<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400609:&nbsp;main&nbsp;(test3.c:5)<br>
+==4381==&nbsp;<br>
+/*错误三：第12行ir[i]数组越界，非法的4字节写操作*/<br>
+==4381==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;4<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x40066C:&nbsp;main&nbsp;(test3.c:12)<br>
+==4381==&nbsp;&nbsp;Address&nbsp;0x51c80d8&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;40&nbsp;alloc'd<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400617:&nbsp;main&nbsp;(test3.c:6)<br>
+==4381==&nbsp;<br>
+==4381==&nbsp;<br>
+==4381==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==4381==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==4381==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;2&nbsp;allocs,&nbsp;2&nbsp;frees,&nbsp;80&nbsp;bytes&nbsp;allocated<br>
+==4381==&nbsp;<br>
+==4381==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==4381==&nbsp;<br>
+==4381==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==4381==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;3&nbsp;errors&nbsp;from&nbsp;3&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z519494SK.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test6<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==19597==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==19597==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==19597==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==19597==&nbsp;Command:&nbsp;./test6<br>
+==19597==&nbsp;<br>
+/*错误：数组越界，位置：第5行*/<br>
+==19597==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;1<br>
+==19597==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x400566:&nbsp;main&nbsp;(test6.c:5)<br>
+==19597==&nbsp;&nbsp;Address&nbsp;0x4d6804a&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;alloc'd<br>
+==19597==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==19597==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400559:&nbsp;main&nbsp;(test6.c:4)<br>
+==19597==&nbsp;<br>
+==19597==&nbsp;<br>
+==19597==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==19597==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==19597==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;1&nbsp;allocs,&nbsp;1&nbsp;frees,&nbsp;10&nbsp;bytes&nbsp;allocated<br>
+==19597==&nbsp;<br>
+==19597==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==19597==&nbsp;<br>
+==19597==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==19597==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;1&nbsp;errors&nbsp;from&nbsp;1&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.3.&nbsp;&nbsp;使用已经释放的内存<br>
+本质上说，系统会在堆上维护一个动态内存链表，如果被释放，就意味着该块内存可以继续被分配给其他部分，如果内存被释放后再访问，就可能覆盖其他部分的信息，这是一种严重的错误。<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195013957.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test4<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==12533==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==12533==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==12533==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==12533==&nbsp;Command:&nbsp;./test4<br>
+==12533==&nbsp;<br>
+/*错误一：第5行的malloc申请与第12行的delete释放不对应*/<br>
+==12533==&nbsp;Mismatched&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete&nbsp;[]<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4006AD:&nbsp;main&nbsp;(test4.c:12)<br>
+==12533==&nbsp;&nbsp;Address&nbsp;0x51c8040&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;alloc'd<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400679:&nbsp;main&nbsp;(test4.c:5)<br>
+==12533==&nbsp;<br>
+/*错误二：使用已经释放了的内存：第12行被释放掉的内存，在第13行被读写*/<br>
+==12533==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;1<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4006B6:&nbsp;main&nbsp;(test4.c:13)<br>
+==12533==&nbsp;&nbsp;Address&nbsp;0x51c8041&nbsp;is&nbsp;1&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;free'd<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4006AD:&nbsp;main&nbsp;(test4.c:12)<br>
+==12533==&nbsp;<br>
+/*错误三：第12行被释放掉的内存，在第14行又一次被非法释放*/<br>
+==12533==&nbsp;Invalid&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete[]&nbsp;/&nbsp;realloc()<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4006C1:&nbsp;main&nbsp;(test4.c:14)<br>
+==12533==&nbsp;&nbsp;Address&nbsp;0x51c8040&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;free'd<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4006AD:&nbsp;main&nbsp;(test4.c:12)<br>
+==12533==&nbsp;<br>
+==12533==&nbsp;<br>
+==12533==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==12533==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==12533==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;1&nbsp;allocs,&nbsp;2&nbsp;frees,&nbsp;10&nbsp;bytes&nbsp;allocated<br>
+==12533==&nbsp;<br>
+==12533==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==12533==&nbsp;<br>
+==12533==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==12533==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;3&nbsp;errors&nbsp;from&nbsp;3&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+错误一：申请和释放不对应<br>
+由于&nbsp;C++&nbsp;兼容&nbsp;C，而&nbsp;C&nbsp;与&nbsp;C++&nbsp;的内存申请和释放函数是不同的，
+因此在&nbsp;C++&nbsp;程序中，就有两套动态内存管理函数。一条不变的规则就是采用&nbsp;C&nbsp;方式申请的内存就
+用&nbsp;C&nbsp;方式释放；用&nbsp;C++&nbsp;方式申请的内存，用&nbsp;C++&nbsp;方式释放。也就是
+用&nbsp;malloc/alloc/realloc&nbsp;方式申请的内存，用&nbsp;free&nbsp;释放；
+用&nbsp;new&nbsp;方式申请的内存用&nbsp;delete&nbsp;释放；delete[]应该又只能和new[](分配数组)相对
+应。在上述程序中，用&nbsp;malloc&nbsp;方式申请了内存却用&nbsp;delete&nbsp;来释放，虽然这在很多情况下不会有问
+题，但这绝对是潜在的问题，不具备可移植性。</p><p>
+
+错误二：释放后仍然读写<br>
+本质上说，系统会在堆上维护一个动态内存链表，如果被释放，就意味着该块内存可以继续被分配给其他部分，如果内存被释放后再访问，就可能覆盖其他部分的信息，这是一种严重的错误，上述程序第13行中就在释放后仍然写这块内存。</p><p>
+
+错误三：申请和释放不匹配<br>
+申请了多少内存，在使用完成后就要释放多少。如果没有释放，或者少释放了就是内存泄露；多释放了也会产生问题。上述程序中，指针p和pt指向的是同一块内存，却被先后释放两次。<br>
+8.4.&nbsp;&nbsp;内存泄漏检测,&nbsp;申请的空间是否释放<br>
+内存泄露（Memory&nbsp;leak）指的是，在程序中动态申请的内存，在使用完后既没有释放，又无法被程序的其他部分访问。内存泄露是在开发大
+型程序中最令人头疼的问题，以至于有人说，内存泄露是无法避免的。其实不然，防止内存泄露要从良好的编程习惯做起，另外重要的一点就是要加强单元测试
+（Unit&nbsp;Test），而memcheck就是这样一款优秀的工具。<br>
+在一个单独的函数中，每个人的内存泄露意识都是比较强的。但很多情况下，我们都会对malloc/free&nbsp;或new/delete
+做&nbsp;一些包装，以符合我们特定的需要，无法做到在一个函数中既使用又释放。内存泄露最容易发生的地方：即两个部分的&nbsp;接口部分，一个
+函数申请内存，一个函数释放内存。并且这些函数由不同的人开发、使用，这样造成内存泄露的可能性就比较大了。这需要养成良好的单元测试习&nbsp;惯，
+将内存泄露消灭在初始阶段。<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195036152.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test5<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==14849==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==14849==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==14849==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==14849==&nbsp;Command:&nbsp;./test5<br>
+==14849==&nbsp;<br>
+/*错误一：第7行被释放掉的内存，在第8行又一次被非法释放*/<br>
+==14849==&nbsp;Invalid&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete[]&nbsp;/&nbsp;realloc()<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400635:&nbsp;main&nbsp;(test5.c:8)<br>
+==14849==&nbsp;&nbsp;Address&nbsp;0x51c80a0&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;20&nbsp;free'd<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40062C:&nbsp;main&nbsp;(test5.c:7)<br>
+==14849==&nbsp;<br>
+==14849==&nbsp;<br>
+==14849==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;20&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==14849==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;2&nbsp;allocs,&nbsp;2&nbsp;frees,&nbsp;40&nbsp;bytes&nbsp;allocated<br>
+==14849==&nbsp;<br>
+/*错误二：第4行申请的内存没有释放，malloc的就丢失了,因为没有指针指向它了,你想free也不知道free啥指针，所以是显示内存泄露*/<br>
+==14849==&nbsp;20&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;definitely&nbsp;lost&nbsp;in&nbsp;loss&nbsp;record&nbsp;1&nbsp;of&nbsp;1<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400609:&nbsp;main&nbsp;(test5.c:4)<br>
+==14849==&nbsp;<br>
+==14849==&nbsp;LEAK&nbsp;SUMMARY:<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;definitely&nbsp;lost:&nbsp;20&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;indirectly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possibly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;still&nbsp;reachable:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==14849==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;suppressed:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==14849==&nbsp;<br>
+==14849==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==14849==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;2&nbsp;errors&nbsp;from&nbsp;2&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)<br>
+definitely&nbsp;lost和still&nbsp;reachable<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195106355.jpg" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;--show-reachable=yes&nbsp;&nbsp;./test10<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==2205==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==2205==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==2205==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==2205==&nbsp;Command:&nbsp;./test10<br>
+==2205==&nbsp;<br>
+==2205==&nbsp;<br>
+==2205==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;404&nbsp;bytes&nbsp;in&nbsp;2&nbsp;blocks<br>
+==2205==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;2&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;404&nbsp;bytes&nbsp;allocated<br>
+==2205==&nbsp;<br>
+/*潜在的内存泄露：第7行申请的内存没有释放，程序运行结束后仍然有qi指针指向它，因而内存指针还有机会使用或者释放，如果后面的程序不用或者不释放也会泄漏&nbsp;*/<br>
+==2205==&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;still&nbsp;reachable&nbsp;in&nbsp;loss&nbsp;record&nbsp;1&nbsp;of&nbsp;2<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2278F:&nbsp;operator&nbsp;new(unsigned&nbsp;long)&nbsp;(vg_replace_malloc.c:298)<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400637:&nbsp;main&nbsp;(test10.c:7)<br>
+==2205==&nbsp;<br>
+/*错误：第5行申请的内存没有释放，指针pi是局部变量，程序运行结束后pi就结束了，malloc的就丢失了,因为没有指针指向它了,所以是显示内存泄露*/<br>
+==2205==&nbsp;400&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;definitely&nbsp;lost&nbsp;in&nbsp;loss&nbsp;record&nbsp;2&nbsp;of&nbsp;2<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A22302:&nbsp;operator&nbsp;new[](unsigned&nbsp;long)&nbsp;(vg_replace_malloc.c:363)<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400629:&nbsp;main&nbsp;(test10.c:5)<br>
+==2205==&nbsp;<br>
+==2205==&nbsp;LEAK&nbsp;SUMMARY:<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;definitely&nbsp;lost:&nbsp;400&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;indirectly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possibly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;still&nbsp;reachable:&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==2205==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;suppressed:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==2205==&nbsp;<br>
+==2205==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==2205==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;1&nbsp;errors&nbsp;from&nbsp;1&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z519513KV.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test2<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==30925==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==30925==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==30925==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==30925==&nbsp;Command:&nbsp;./test2<br>
+==30925==&nbsp;<br>
+/*错误一：数组越界，位置：第5行*/<br>
+==30925==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;4<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x400516:&nbsp;f&nbsp;(test2.c:5)<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400526:&nbsp;main&nbsp;(test2.c:10)<br>
+==30925==&nbsp;&nbsp;Address&nbsp;0x4d68068&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;40&nbsp;alloc'd<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400509:&nbsp;f&nbsp;(test2.c:4)<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400526:&nbsp;main&nbsp;(test2.c:10)<br>
+==30925==&nbsp;<br>
+==30925==&nbsp;<br>
+==30925==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;40&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==30925==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;1&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;40&nbsp;bytes&nbsp;allocated<br>
+==30925==&nbsp;<br>
+/*错误二：第4行申请的内存没有释放，指针x是局部变量，f函数调用结束后x就结束了，malloc的就丢失了,因为没有指针指向它了,所以是显示内存泄露*/<br>
+==30925==&nbsp;40&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;definitely&nbsp;lost&nbsp;in&nbsp;loss&nbsp;record&nbsp;1&nbsp;of&nbsp;1<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400509:&nbsp;f&nbsp;(test2.c:4)<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400526:&nbsp;main&nbsp;(test2.c:10)<br>
+==30925==&nbsp;<br>
+==30925==&nbsp;LEAK&nbsp;SUMMARY:<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;definitely&nbsp;lost:&nbsp;40&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;indirectly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possibly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;still&nbsp;reachable:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==30925==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;suppressed:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==30925==&nbsp;<br>
+==30925==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==30925==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;2&nbsp;errors&nbsp;from&nbsp;2&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.5.&nbsp;&nbsp;非法释放内存<br>
+申请了多少内存，在使用完成后就要释放多少。如果没有释放，或者少释放了就是内存泄露；多释放了也会产生问题。<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195205F4.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;./test7<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==21443==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==21443==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==21443==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==21443==&nbsp;Command:&nbsp;./test7<br>
+==21443==&nbsp;<br>
+/*错误：第5行被释放掉的内存，在第6行又一次被非法释放*/<br>
+==21443==&nbsp;Invalid&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete[]&nbsp;/&nbsp;realloc()<br>
+==21443==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==21443==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40056F:&nbsp;main&nbsp;(test7.c:6)<br>
+==21443==&nbsp;&nbsp;Address&nbsp;0x4d68040&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;free'd<br>
+==21443==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==21443==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400566:&nbsp;main&nbsp;(test7.c:5)<br>
+==21443==&nbsp;<br>
+==21443==&nbsp;<br>
+==21443==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==21443==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==21443==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;1&nbsp;allocs,&nbsp;2&nbsp;frees,&nbsp;10&nbsp;bytes&nbsp;allocated<br>
+==21443==&nbsp;<br>
+==21443==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==21443==&nbsp;<br>
+==21443==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==21443==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;1&nbsp;errors&nbsp;from&nbsp;1&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.6.&nbsp;&nbsp;传递系统调用参数时读写权限不足<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195241400.jpg" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;--show-reachable=yes&nbsp;--track-origins=yes&nbsp;./test8<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==23378==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==23378==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==23378==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==23378==&nbsp;Command:&nbsp;./test8<br>
+==23378==&nbsp;<br>
+/*错误一：第7行指向未初始化的内存块的指针*/<br>
+==23378==&nbsp;Syscall&nbsp;param&nbsp;write(buf)&nbsp;points&nbsp;to&nbsp;uninitialised&nbsp;byte(s)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4BDB790:&nbsp;__write_nocancel&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005CE:&nbsp;main&nbsp;(test8.c:7)<br>
+==23378==&nbsp;&nbsp;Address&nbsp;0x4d68040&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;10&nbsp;alloc'd<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005A9:&nbsp;main&nbsp;(test8.c:5)<br>
+==23378==&nbsp;&nbsp;Uninitialised&nbsp;value&nbsp;was&nbsp;created&nbsp;by&nbsp;a&nbsp;heap&nbsp;allocation<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005A9:&nbsp;main&nbsp;(test8.c:5)<br>
+==23378==&nbsp;<br>
+/*错误二：第8行系统调用退出时使用了未初始化的内存块*/<br>
+==23378==&nbsp;Syscall&nbsp;param&nbsp;exit_group(status)&nbsp;contains&nbsp;uninitialised&nbsp;byte(s)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4BBA888:&nbsp;_Exit&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4B5A6F4:&nbsp;exit&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005D9:&nbsp;main&nbsp;(test8.c:8)<br>
+==23378==&nbsp;&nbsp;Uninitialised&nbsp;value&nbsp;was&nbsp;created&nbsp;by&nbsp;a&nbsp;heap&nbsp;allocation<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005B7:&nbsp;main&nbsp;(test8.c:6)<br>
+==23378==&nbsp;<br>
+==23378==&nbsp;<br>
+==23378==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;14&nbsp;bytes&nbsp;in&nbsp;2&nbsp;blocks<br>
+==23378==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;2&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;14&nbsp;bytes&nbsp;allocated<br>
+==23378==&nbsp;<br>
+/*潜在的内存泄露：第6行申请的内存没有释放*/<br>
+==23378==&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;still&nbsp;reachable&nbsp;in&nbsp;loss&nbsp;record&nbsp;1&nbsp;of&nbsp;2<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005B7:&nbsp;main&nbsp;(test8.c:6)<br>
+==23378==&nbsp;<br>
+/*潜在的内存泄露：第5行申请的内存没有释放*/<br>
+==23378==&nbsp;10&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;still&nbsp;reachable&nbsp;in&nbsp;loss&nbsp;record&nbsp;2&nbsp;of&nbsp;2<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4005A9:&nbsp;main&nbsp;(test8.c:5)<br>
+==23378==&nbsp;<br>
+==23378==&nbsp;LEAK&nbsp;SUMMARY:<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;definitely&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;indirectly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possibly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;still&nbsp;reachable:&nbsp;14&nbsp;bytes&nbsp;in&nbsp;2&nbsp;blocks<br>
+==23378==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;suppressed:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==23378==&nbsp;<br>
+==23378==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==23378==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;2&nbsp;errors&nbsp;from&nbsp;2&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.7.&nbsp;&nbsp;使用不恰当的释放函数释放块<br>
+由于&nbsp;C++&nbsp;兼容&nbsp;C，而&nbsp;C&nbsp;与&nbsp;C++&nbsp;的内存申请和释放函数是不同的，
+因此在&nbsp;C++&nbsp;程序中，就有两套动态内存管理函数。一条不变的规则就是采用&nbsp;C&nbsp;方式申请的内存就
+用&nbsp;C&nbsp;方式释放；用&nbsp;C++&nbsp;方式申请的内存，用&nbsp;C++&nbsp;方式释放。也就是
+用&nbsp;malloc/alloc/realloc&nbsp;方式申请的内存，用&nbsp;free&nbsp;释放；
+用&nbsp;new&nbsp;方式申请的内存用&nbsp;delete&nbsp;释放。在上述程序中，用&nbsp;malloc&nbsp;方
+式申请了内存却用&nbsp;delete&nbsp;来释放，虽然这在很多情况下不会有问题，但这绝对是潜在的问题。<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195313558.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=memcheck&nbsp;--leak-check=full&nbsp;--show-reachable=yes&nbsp;./test9<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==18190==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==18190==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==18190==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==18190==&nbsp;Command:&nbsp;./test9<br>
+==18190==&nbsp;<br>
+/*错误一：第17行使用未初始化的内存块指针p*/<br>
+==18190==&nbsp;Syscall&nbsp;param&nbsp;write(buf)&nbsp;points&nbsp;to&nbsp;uninitialised&nbsp;byte(s)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x503B790:&nbsp;__write_nocancel&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40080A:&nbsp;main&nbsp;(test9.c:17)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c80e0&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;4&nbsp;alloc'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007F3:&nbsp;main&nbsp;(test9.c:16)<br>
+==18190==&nbsp;<br>
+/*错误二：第18行数组越界*/<br>
+==18190==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;1<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x400813:&nbsp;main&nbsp;(test9.c:18)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c8094&nbsp;is&nbsp;0&nbsp;bytes&nbsp;after&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;4&nbsp;alloc'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A22302:&nbsp;operator&nbsp;new[](unsigned&nbsp;long)&nbsp;(vg_replace_malloc.c:363)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007E5:&nbsp;main&nbsp;(test9.c:15)<br>
+==18190==&nbsp;<br>
+/*错误三：第8行使用未初始化的值y，在main()调用的foo&nbsp;()函数中*/<br>
+==18190==&nbsp;Use&nbsp;of&nbsp;uninitialised&nbsp;value&nbsp;of&nbsp;size&nbsp;8<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4FC83CD:&nbsp;_itoa_word&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FCB507:&nbsp;vfprintf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FD2509:&nbsp;printf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007C2:&nbsp;foo(int)&nbsp;(test9.c:8)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+/*第8行使用未初始化的值y，在main()调用的foo&nbsp;()函数中，这里的函数调用关系是通过堆栈跟踪的，所以有时会非常多，其它一些错误都是由于把未初始化的值传递给libc函数而被检测到*/<br>
+==18190==&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4FC83D7:&nbsp;_itoa_word&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FCB507:&nbsp;vfprintf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FD2509:&nbsp;printf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007C2:&nbsp;foo(int)&nbsp;(test9.c:8)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4FCB576:&nbsp;vfprintf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FD2509:&nbsp;printf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007C2:&nbsp;foo(int)&nbsp;(test9.c:8)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4FCBAE1:&nbsp;vfprintf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FD2509:&nbsp;printf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007C2:&nbsp;foo(int)&nbsp;(test9.c:8)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;Conditional&nbsp;jump&nbsp;or&nbsp;move&nbsp;depends&nbsp;on&nbsp;uninitialised&nbsp;value(s)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4FCA5F2:&nbsp;vfprintf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4FD2509:&nbsp;printf&nbsp;(in&nbsp;/lib64/libc-2.4.so)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007C2:&nbsp;foo(int)&nbsp;(test9.c:8)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+y=0<br>
+/*错误四：第21行释放后的内存仍然被读写*/<br>
+==18190==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;4<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x40082B:&nbsp;main&nbsp;(test9.c:21)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c8040&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;8&nbsp;free'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2135A:&nbsp;free&nbsp;(vg_replace_malloc.c:446)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400826:&nbsp;main&nbsp;(test9.c:20)<br>
+==18190==&nbsp;<br>
+/*错误五：第22行delete与第16行malloc不对应*/<br>
+==18190==&nbsp;Mismatched&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete&nbsp;[]<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400839:&nbsp;main&nbsp;(test9.c:22)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c80e0&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;4&nbsp;alloc'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A21958:&nbsp;malloc&nbsp;(vg_replace_malloc.c:270)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007F3:&nbsp;main&nbsp;(test9.c:16)<br>
+==18190==&nbsp;<br>
+/*错误六：第24行delete与第15行new[]不对应*/<br>
+==18190==&nbsp;Mismatched&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete&nbsp;[]<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40085B:&nbsp;main&nbsp;(test9.c:24)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c8090&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;4&nbsp;alloc'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A22302:&nbsp;operator&nbsp;new[](unsigned&nbsp;long)&nbsp;(vg_replace_malloc.c:363)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007E5:&nbsp;main&nbsp;(test9.c:15)<br>
+==18190==&nbsp;<br>
+/*错误七：第24行释放了的内存，在第25行重复释放*/<br>
+==18190==&nbsp;Invalid&nbsp;free()&nbsp;/&nbsp;delete&nbsp;/&nbsp;delete[]&nbsp;/&nbsp;realloc()<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x400864:&nbsp;main&nbsp;(test9.c:25)<br>
+==18190==&nbsp;&nbsp;Address&nbsp;0x51c8090&nbsp;is&nbsp;0&nbsp;bytes&nbsp;inside&nbsp;a&nbsp;block&nbsp;of&nbsp;size&nbsp;4&nbsp;free'd<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A20F40:&nbsp;operator&nbsp;delete(void*)&nbsp;(vg_replace_malloc.c:480)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40085B:&nbsp;main&nbsp;(test9.c:24)<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==18190==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;4&nbsp;allocs,&nbsp;4&nbsp;frees,&nbsp;20&nbsp;bytes&nbsp;allocated<br>
+==18190==&nbsp;<br>
+/*错误八：foo函数第7行申请的内存没有释放*/<br>
+==18190==&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks&nbsp;are&nbsp;definitely&nbsp;lost&nbsp;in&nbsp;loss&nbsp;record&nbsp;1&nbsp;of&nbsp;1<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4A2278F:&nbsp;operator&nbsp;new(unsigned&nbsp;long)&nbsp;(vg_replace_malloc.c:298)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4007AC:&nbsp;foo(int)&nbsp;(test9.c:7)<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x40081D:&nbsp;main&nbsp;(test9.c:19)<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;LEAK&nbsp;SUMMARY:<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;definitely&nbsp;lost:&nbsp;4&nbsp;bytes&nbsp;in&nbsp;1&nbsp;blocks<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;indirectly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possibly&nbsp;lost:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;still&nbsp;reachable:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==18190==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;suppressed:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==18190==&nbsp;<br>
+==18190==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==18190==&nbsp;Use&nbsp;--track-origins=yes&nbsp;to&nbsp;see&nbsp;where&nbsp;uninitialised&nbsp;values&nbsp;come&nbsp;from<br>
+==18190==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;12&nbsp;errors&nbsp;from&nbsp;12&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.8.&nbsp;&nbsp;非法指针<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z5195353222.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;&nbsp;--tool=memcheck&nbsp;&nbsp;--leak-check=full&nbsp;--show-reachable=yes&nbsp;--track-origins=yes&nbsp;&nbsp;./test11<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==1051==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==1051==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==1051==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==1051==&nbsp;Command:&nbsp;./test11<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;Use&nbsp;of&nbsp;uninitialised&nbsp;value&nbsp;of&nbsp;size&nbsp;8<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004C0:&nbsp;test&nbsp;(test11.c:6)<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4004D5:&nbsp;main&nbsp;(test11.c:10)<br>
+==1051==&nbsp;&nbsp;Uninitialised&nbsp;value&nbsp;was&nbsp;created&nbsp;by&nbsp;a&nbsp;stack&nbsp;allocation<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004B8:&nbsp;test&nbsp;(test11.c:4)<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;Invalid&nbsp;write&nbsp;of&nbsp;size&nbsp;4<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004C0:&nbsp;test&nbsp;(test11.c:6)<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4004D5:&nbsp;main&nbsp;(test11.c:10)<br>
+==1051==&nbsp;&nbsp;Address&nbsp;0x0&nbsp;is&nbsp;not&nbsp;stack'd,&nbsp;malloc'd&nbsp;or&nbsp;(recently)&nbsp;free'd<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;<br>
+/*错误：第6行非法指针，导致coredump*/<br>
+==1051==&nbsp;Process&nbsp;terminating&nbsp;with&nbsp;default&nbsp;action&nbsp;of&nbsp;signal&nbsp;11&nbsp;(SIGSEGV)<br>
+==1051==&nbsp;&nbsp;Access&nbsp;not&nbsp;within&nbsp;mapped&nbsp;region&nbsp;at&nbsp;address&nbsp;0x0<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004C0:&nbsp;test&nbsp;(test11.c:6)<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;0x4004D5:&nbsp;main&nbsp;(test11.c:10)<br>
+==1051==&nbsp;&nbsp;If&nbsp;you&nbsp;believe&nbsp;this&nbsp;happened&nbsp;as&nbsp;a&nbsp;result&nbsp;of&nbsp;a&nbsp;stack<br>
+==1051==&nbsp;&nbsp;overflow&nbsp;in&nbsp;your&nbsp;program's&nbsp;main&nbsp;thread&nbsp;(unlikely&nbsp;but<br>
+==1051==&nbsp;&nbsp;possible),&nbsp;you&nbsp;can&nbsp;try&nbsp;to&nbsp;increase&nbsp;the&nbsp;size&nbsp;of&nbsp;the<br>
+==1051==&nbsp;&nbsp;main&nbsp;thread&nbsp;stack&nbsp;using&nbsp;the&nbsp;--main-stacksize=&nbsp;flag.<br>
+==1051==&nbsp;&nbsp;The&nbsp;main&nbsp;thread&nbsp;stack&nbsp;size&nbsp;used&nbsp;in&nbsp;this&nbsp;run&nbsp;was&nbsp;8388608.<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==1051==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==1051==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;0&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;0&nbsp;bytes&nbsp;allocated<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==1051==&nbsp;<br>
+==1051==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==1051==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;2&nbsp;errors&nbsp;from&nbsp;2&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+8.9.&nbsp;&nbsp;读写不适当的栈中内存<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z519541V23.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;&nbsp;&nbsp;--leak-check=full&nbsp;--show-reachable=yes&nbsp;&nbsp;./test13<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==13683==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==13683==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==13683==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==13683==&nbsp;Command:&nbsp;./test13<br>
+==13683==&nbsp;<br>
+/*错误：第5行地址处根本没有映射内存页面，故为指向无效地址*/<br>
+==13683==&nbsp;Invalid&nbsp;read&nbsp;of&nbsp;size&nbsp;4<br>
+==13683==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004BC:&nbsp;main&nbsp;(test13.c:5)<br>
+==13683==&nbsp;&nbsp;Address&nbsp;0x0&nbsp;is&nbsp;not&nbsp;stack'd,&nbsp;malloc'd&nbsp;or&nbsp;(recently)&nbsp;free'd<br>
+==13683==&nbsp;<br>
+==13683==&nbsp;<br>
+==13683==&nbsp;Process&nbsp;terminating&nbsp;with&nbsp;default&nbsp;action&nbsp;of&nbsp;signal&nbsp;11&nbsp;(SIGSEGV)<br>
+==13683==&nbsp;&nbsp;Access&nbsp;not&nbsp;within&nbsp;mapped&nbsp;region&nbsp;at&nbsp;address&nbsp;0x0<br>
+==13683==&nbsp;&nbsp;&nbsp;&nbsp;at&nbsp;0x4004BC:&nbsp;main&nbsp;(test13.c:5)<br>
+==13683==&nbsp;&nbsp;If&nbsp;you&nbsp;believe&nbsp;this&nbsp;happened&nbsp;as&nbsp;a&nbsp;result&nbsp;of&nbsp;a&nbsp;stack<br>
+==13683==&nbsp;&nbsp;overflow&nbsp;in&nbsp;your&nbsp;program's&nbsp;main&nbsp;thread&nbsp;(unlikely&nbsp;but<br>
+==13683==&nbsp;&nbsp;possible),&nbsp;you&nbsp;can&nbsp;try&nbsp;to&nbsp;increase&nbsp;the&nbsp;size&nbsp;of&nbsp;the<br>
+==13683==&nbsp;&nbsp;main&nbsp;thread&nbsp;stack&nbsp;using&nbsp;the&nbsp;--main-stacksize=&nbsp;flag.<br>
+==13683==&nbsp;&nbsp;The&nbsp;main&nbsp;thread&nbsp;stack&nbsp;size&nbsp;used&nbsp;in&nbsp;this&nbsp;run&nbsp;was&nbsp;8388608.<br>
+==13683==&nbsp;<br>
+==13683==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==13683==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==13683==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;0&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;0&nbsp;bytes&nbsp;allocated<br>
+==13683==&nbsp;<br>
+==13683==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==13683==&nbsp;<br>
+==13683==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==13683==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;1&nbsp;errors&nbsp;from&nbsp;1&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)</p><p>
+
+9、&nbsp;Callgrind使用举例<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z519544W60.png" data-bd-imgshare-binded="1"><br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;使用Valgrind检查<br>
+valgrind&nbsp;--tool=callgrind&nbsp;./test14<br>
+Ø&nbsp;&nbsp;&nbsp;&nbsp;分析输出的调试信息<br>
+==6350==&nbsp;Callgrind,&nbsp;a&nbsp;call-graph&nbsp;generating&nbsp;cache&nbsp;profiler<br>
+==6350==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Josef&nbsp;Weidendorfer&nbsp;et&nbsp;al.<br>
+==6350==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==6350==&nbsp;Command:&nbsp;./test14<br>
+==6350==&nbsp;<br>
+==6350==&nbsp;For&nbsp;interactive&nbsp;control,&nbsp;run&nbsp;'callgrind_control&nbsp;-h'.<br>
+i=0<br>
+==6350==&nbsp;<br>
+==6350==&nbsp;Events&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Ir<br>
+==6350==&nbsp;Collected&nbsp;:&nbsp;148566<br>
+==6350==&nbsp;<br>
+==6350==&nbsp;I&nbsp;&nbsp;&nbsp;refs:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;148,566<br>
+/data/jeannedai&gt;&nbsp;callgrind_annotate&nbsp;callgrind.out.6350<br>
+--------------------------------------------------------------------------------<br>
+Profile&nbsp;data&nbsp;file&nbsp;'callgrind.out.6350'&nbsp;(creator:&nbsp;callgrind-3.8.1)<br>
+--------------------------------------------------------------------------------<br>
+I1&nbsp;cache:&nbsp;<br>
+D1&nbsp;cache:&nbsp;<br>
+LL&nbsp;cache:&nbsp;<br>
+Timerange:&nbsp;Basic&nbsp;block&nbsp;0&nbsp;-&nbsp;30496<br>
+Trigger:&nbsp;Program&nbsp;termination<br>
+Profiled&nbsp;target:&nbsp;&nbsp;./test14&nbsp;(PID&nbsp;6350,&nbsp;part&nbsp;1)<br>
+Events&nbsp;recorded:&nbsp;&nbsp;Ir<br>
+Events&nbsp;shown:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ir<br>
+Event&nbsp;sort&nbsp;order:&nbsp;Ir<br>
+Thresholds:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;99<br>
+Include&nbsp;dirs:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+User&nbsp;annotated:&nbsp;&nbsp;&nbsp;<br>
+Auto-annotation:&nbsp;&nbsp;off</p><p>
+&nbsp;
+--------------------------------------------------------------------------------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Ir&nbsp;<br>
+--------------------------------------------------------------------------------<br>
+148,566&nbsp;&nbsp;PROGRAM&nbsp;TOTALS</p><p>
+&nbsp;
+--------------------------------------------------------------------------------<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Ir&nbsp;&nbsp;file:function<br>
+--------------------------------------------------------------------------------<br>
+40,690&nbsp;&nbsp;???:_dl_addr&nbsp;[/lib64/libc-2.4.so]<br>
+25,259&nbsp;&nbsp;???:do_lookup_x&nbsp;[/lib64/ld-2.4.so]<br>
+21,856&nbsp;&nbsp;???:_dl_relocate_object&nbsp;[/lib64/ld-2.4.so]<br>
+17,011&nbsp;&nbsp;???:strcmp&nbsp;[/lib64/ld-2.4.so]<br>
+13,135&nbsp;&nbsp;???:_dl_elf_hash&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;8,130&nbsp;&nbsp;???:_dl_lookup_symbol_x&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;1,634&nbsp;&nbsp;???:_dl_map_object_from_fd&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;1,095&nbsp;&nbsp;???:_dl_map_object_deps&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;1,046&nbsp;&nbsp;???:strsep&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;1,042&nbsp;&nbsp;???:dl_main&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;1,025&nbsp;&nbsp;???:malloc_init_state&nbsp;[/lib64/libc-2.4.so]<br>
+&nbsp;&nbsp;&nbsp;895&nbsp;&nbsp;???:_dl_check_map_versions&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;&nbsp;&nbsp;823&nbsp;&nbsp;???:_dl_name_match_p&nbsp;[/lib64/ld-2.4.so]<br>
+&nbsp;&nbsp;&nbsp;799&nbsp;&nbsp;???:strlen&nbsp;[/lib64/ld-2.4.so]</p><p>
+&nbsp;
+10、&nbsp;Valgrind不能查出哪些错误<br>
+Valgrind不对静态数组(分配在栈上)进行边界检查。如果在程序中声明了一个数组:<br>
+<img alt="" src="Linux%E5%86%85%E5%AD%98%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7%E2%80%94Valgrind_sunny90-web%E5%BC%80%E5%8F%91_files/1-140Z519551N05.png" data-bd-imgshare-binded="1"><br>
+==24729==&nbsp;Memcheck,&nbsp;a&nbsp;memory&nbsp;error&nbsp;detector<br>
+==24729==&nbsp;Copyright&nbsp;(C)&nbsp;2002-2012,&nbsp;and&nbsp;GNU&nbsp;GPL'd,&nbsp;by&nbsp;Julian&nbsp;Seward&nbsp;et&nbsp;al.<br>
+==24729==&nbsp;Using&nbsp;Valgrind-3.8.1&nbsp;and&nbsp;LibVEX;&nbsp;rerun&nbsp;with&nbsp;-h&nbsp;for&nbsp;copyright&nbsp;info<br>
+==24729==&nbsp;Command:&nbsp;./test12<br>
+==24729==&nbsp;<br>
+==24729==&nbsp;<br>
+==24729==&nbsp;HEAP&nbsp;SUMMARY:<br>
+==24729==&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;use&nbsp;at&nbsp;exit:&nbsp;0&nbsp;bytes&nbsp;in&nbsp;0&nbsp;blocks<br>
+==24729==&nbsp;&nbsp;&nbsp;total&nbsp;heap&nbsp;usage:&nbsp;0&nbsp;allocs,&nbsp;0&nbsp;frees,&nbsp;0&nbsp;bytes&nbsp;allocated<br>
+==24729==&nbsp;<br>
+==24729==&nbsp;All&nbsp;heap&nbsp;blocks&nbsp;were&nbsp;freed&nbsp;--&nbsp;no&nbsp;leaks&nbsp;are&nbsp;possible<br>
+==24729==&nbsp;<br>
+==24729==&nbsp;For&nbsp;counts&nbsp;of&nbsp;detected&nbsp;and&nbsp;suppressed&nbsp;errors,&nbsp;rerun&nbsp;with:&nbsp;-v<br>
+==24729==&nbsp;ERROR&nbsp;SUMMARY:&nbsp;0&nbsp;errors&nbsp;from&nbsp;0&nbsp;contexts&nbsp;(suppressed:&nbsp;2&nbsp;from&nbsp;2)<br>
+Valgrind则不会警告你!出于测试目的，你可以把数组改为动态在堆上分配的数组，这样就可能进行边界检查了。这个方法好像有点得不偿失的感觉。</p></div></div></div>
+    </div>
+
+    <div>
+      <div class="reader-message">载入中…</div>
+    </div>
+  </div>
+
+  <ul class="toolbar reader-toolbar">
+    <li><button class="button close-button" title="关闭阅读模式"></button></li>
+    <ul class="dropdown style-dropdown">
+      <li><button class="dropdown-toggle button style-button" title="字型调控"></button></li>
+      <li class="dropdown-popup">
+        <div class="font-type-buttons"><button class="sans-serif-button selected"><div class="name">Aa</div><div class="description">无衬线</div></button><button class="serif-button"><div class="name">Aa</div><div class="description">衬线</div></button></div>
+        <hr>
+        <div class="font-size-buttons">
+          <button class="minus-button">
+          </button><button class="font-size-sample">Aa</button><button class="plus-button" disabled="true">
+        </button></div>
+        <hr>
+        <div class="content-width-buttons">
+          <button class="content-width-minus-button">
+          </button><button class="content-width-plus-button">
+        </button></div>
+        <hr>
+        <div class="line-height-buttons">
+          <button class="line-height-minus-button">
+          </button><button class="line-height-plus-button">
+        </button></div>
+        <hr>
+        <div class="color-scheme-buttons"><button class="light-button selected"><div class="name">亮色</div></button><button class="dark-button"><div class="name">暗色</div></button><button class="sepia-button"><div class="name">深褐色</div></button></div>
+        <div class="dropdown-arrow">
+      </div></li>
+    </ul>
+  <ul class="dropdown narrate-dropdown"><li>
+       <button class="dropdown-toggle button narrate-toggle" title="讲述人" hidden=""></button>
+    </li>
+    <li class="dropdown-popup">
+      <div class="narrate-row narrate-control">
+        <button disabled="disabled" class="narrate-skip-previous" title="后退"></button>
+        <button class="narrate-start-stop" title="开始"></button>
+        <button disabled="disabled" class="narrate-skip-next" title="前进"></button>
+      </div>
+      <div class="narrate-row narrate-rate">
+        <input class="narrate-rate-input" value="0" step="5" max="100" min="-100" type="range" title="速度">
+      </div>
+      <div class="narrate-row narrate-voices"><div class="voiceselect voice-select"><button class="select-toggle" aria-controls="voice-options">
+      <span class="label">语音：</span> <span class="current-voice"></span>
+    </button>
+    <div class="options" id="voice-options" role="listbox"></div></div></div>
+      <div class="dropdown-arrow"></div>
+    </li></ul><button data-buttonid="pocket-button" class="button pocket-button" style="background-image: url(&quot;chrome://pocket/content/panels/img/pocket-outline.svg&quot;); background-size: 20px 20px;" title="保存到 Pocket"></button></ul>
+
+
+
+
+</body></html>

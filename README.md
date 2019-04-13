@@ -1,1 +1,1 @@
-# -
+为了面试，整理自己的知识，起步参考https://github.com/steveLauwh/The-deliberate-practice-of-software-technology

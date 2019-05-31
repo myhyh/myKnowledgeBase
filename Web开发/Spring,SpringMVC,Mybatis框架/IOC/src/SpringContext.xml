@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+    <bean id="f_" class="Demo.Foo">
+        <constructor-arg index="0" value="Foo1"></constructor-arg>
+    </bean>
+
+    <bean id="f1" class="Demo.Foo">
+        <property name="a" value="F1"></property>
+        <property name="b" value="1"></property>
+        <!-- <property name="c"><null/></property> -->
+        <property name="c">
+            
+            <list>
+                <bean class="java.lang.Integer">
+                    <constructor-arg value="1"></constructor-arg>
+                </bean>
+                <bean class="java.lang.Integer">
+                    <constructor-arg value="2"></constructor-arg>
+                </bean>
+            </list>
+        </property>
+        <!-- <property name="d"><null/></property> -->
+        <property name="d">
+            <map>
+                <entry key="1" value="asd"></entry>
+                <entry key="2" value="bbb"></entry>
+            </map>
+        </property>
+        <property name="next" ref="f_"></property>
+    </bean>
+
+        
+    
+</beans>

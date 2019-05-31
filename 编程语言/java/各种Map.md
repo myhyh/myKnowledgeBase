@@ -1,0 +1,7 @@
+Hashtable 和 ConcurrentHashMap是线程安全的,
+
+key不允许为null,
+
+value不允许为null,因为没查着key也会返回null,由于多线程操作,无法使用containsKey来判断Map中是否含有对应的key,所以无法判断是查到了null还是根本没查到
+
+TreeMap和HashMap线程不安全,value允许为null,但是TreeMap的key不允许为null,因为TreeMap要求key有序,null没法排序,即使自己实现comparator,能插入key为null的了,也没法通过get(null)获取,因为TreeMap实现中传入null直接就返回null

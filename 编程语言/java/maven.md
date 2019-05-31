@@ -1,0 +1,11 @@
+maven帮我们管理项目依赖的jar包,用groupId,artifactId和version唯一标识了一个jar包,这样它就可以自动在仓库里找到合适的包,放到我们的项目目录里
+
+所使用的配置文件就是pom.xml,首先是我们自己项目的groupId,artifactId和version,项目的name
+
+可选的属性有properties,可以配置一些公用的变量,比如说一个框架的多个包的版本要统一,就在这里定义一个变量
+
+接下来是dependencies,里面定义需要依赖的jar包的groupId,artifactId和version
+
+dependencyManagement是可选的,下面可以定义一系列dependencies,这些dependencies的依赖版本会被子项目继承,如果子项目依赖相同的包且没有指定版本,那就一级级向父项目查找,直到找到dependencyManagement,按这里的版本号获取依赖
+
+接下来是build,可以制定构建时的一些操作,其中plugins可以制定相当多实用的插件来提供丰富的功能

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+    <head>	
+        <meta charset="utf-8">
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    </head>
+    <body>
+        <div id="app">
+            <!-- 受Vue对象管理的element下可以这样读取Vue对象里的data -->
+            <!-- 简单属性例子 -->
+            <div>名字是:{{name}}</div>
+            <div>生日是:{{birth}}</div>
+            <!-- 计算属性例子 -->
+            <div>年龄是:{{age}}</div>
+            <!-- 利用Vue对象里的数据做条件控制 -->
+            <div v-if="age > 18">
+                年龄大于18岁,可以看
+            </div>
+            <div v-else-if="age > 16">
+                别急,等两年就能看了
+            </div>
+            <div v-else>
+                你太小了,不能看
+            </div>
+            <!-- 利用for循环产生对象 -->
+            <div v-for="num in nums">
+                {{num+1}}
+            </div>
+            <!-- 动态监听器 -->
+            <!-- 注意用vue调的方法必须在vue对象里声明才行 -->
+            <button v-on:click="aaa()">显示aaa</button>
+            <button @click="aaa()">另一种写法</button>
+
+            <!-- 动态属性 -->
+            <div v-bind:style="fashion">
+                我是自定义属性的
+            </div>
+            <br>
+            <div :style="fashion">
+                我也是自定义属性的
+            </div>
+        </div>
+        
+    </body>
+    <script>
+        //Vue对象是Vue框架的核心,和页面上的element绑定,进行模板渲染工作
+        //Vue对象必须在页面下面,因为页面加载完了才有element,vue对象才能绑定上去
+        var app=new Vue({
+            el:"#app",   //这里类似css选择器的方式绑定页面上第一个匹配的对象
+            methods: {      //这里可以在Vue对象上加一些方法
+                hello(){
+                    console.log("hello???");
+                },
+                aaa(){
+                    alert("aaa")
+                }
+            },
+            data:{      //这里是具体渲染需要的数据
+                name:"zhangsan",
+                birth:new Date(Date.parse("2002-9-9")),
+                nums:[1,2,3,4,5],
+                fashion:{
+                    "background":"red"
+                }
+            },
+            computed: {
+                age(){      //这里是计算属性,其依赖的Vue对象的内部属性发生更新,则计算属性也随之更新
+                    return new Date(Date.now()).getFullYear()-this.birth.getFullYear();
+                }
+            },
+            watch: {    //这里是数据监听器,同名数据发生变化,就会调这个,并把新的值和旧的值传进这个函数
+                name:(newvalue,oldvalue)=>{
+                    console.log("改名了: 原名",oldvalue,"新名",newvalue)
+                }                
+            },
+        })
+    </script>
+</html>

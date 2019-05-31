@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/aop
+     http://www.springframework.org/schema/aop/spring-aop.xsd">
+    
+    <bean id="worker" class="Demo.RealWorker"></bean>
+    <bean id="logger" class="Demo.Logger"></bean>
+    <aop:config>
+        <aop:pointcut id="loggerCutpoint" expression="execution(* Demo.RealWorker.*(..))" />
+        <aop:aspect id="loggerAspect" ref="logger">
+            <aop:around pointcut-ref="loggerCutpoint" method="logAround" />
+            <aop:after pointcut-ref="loggerCutpoint" method="logAfter" />
+            <aop:before pointcut-ref="loggerCutpoint" method="logBefore" />
+            <aop:after-returning pointcut-ref="loggerCutpoint" method="logAfterReturning" />
+            <aop:after-throwing pointcut-ref="loggerCutpoint" method="logAfterThrowing" />
+        </aop:aspect>
+    </aop:config>
+        
+    
+</beans>

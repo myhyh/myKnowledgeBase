@@ -1,0 +1,3 @@
+String构造器
+
+所有修改都使用synchronized加锁,使用toStringCache保存上一次toString的结果,以节省开销,除此以外同AbstractStringBuilder

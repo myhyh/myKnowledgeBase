@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - StringTest",
+            "request": "launch",
+            "mainClass": "StringTest"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - ObjectTest",
+            "request": "launch",
+            "mainClass": "ObjectTest"
+        }
+    ]
+}

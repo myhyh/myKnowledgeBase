@@ -1,0 +1,2 @@
+启动时无法启动datanode,因为多次格式化namenode导致namenode和datanode的clusterid不一致
+https://blog.csdn.net/u013129944/article/details/78604651

@@ -1,3 +1,5 @@
+import java.util.concurrent.locks.ReentrantLock;
+
 class Worker implements Runnable {
     public void run() {
         System.out.println("Hello");
@@ -51,5 +53,20 @@ class Example {
         r.stop();
         // t3.stop(); // 强制杀死线程,不推荐
         System.out.println("STOP!");
+    }
+
+    ReentrantLock lock = new ReentrantLock();
+
+    void lockedFunction() {
+        lock.lock();
+
+        // lock.lockInterruptibly();// 其他线程调用当前线程的interrupt即可退出获取锁的等待
+
+        // while (!lock.tryLock())// 忙等待锁
+        // ;
+
+        // 中间进行加锁后的操作
+
+        lock.unlock();
     }
 }

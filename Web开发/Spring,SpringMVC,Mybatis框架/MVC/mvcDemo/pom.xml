@@ -6,7 +6,7 @@
   <version>1.0-SNAPSHOT</version>
   <name>mvcDemo Maven Webapp</name>
   <properties>
-    <SpringVersion>5.1.7.RELEASE</SpringVersion>
+    <SpringVersion>5.3.18</SpringVersion>
   </properties>
   <dependencies>
     <dependency>
